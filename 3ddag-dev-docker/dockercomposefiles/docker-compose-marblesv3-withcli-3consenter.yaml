@@ -1,0 +1,297 @@
+version: '2'
+
+services:
+  3ddag-consenter-1:
+    container_name: 3ddag-consenter-1
+    image: spiralchain/3ddag-consenter:amd64-latest
+    environment:
+      - GOPATH=/opt/gopath    
+      - GRPC_TRACE=all
+      - GRPC_VERBOSITY=debug
+      - CONSENTER_GENERAL_LOGLEVEL=ERROR
+      - CONSENTER_GENERAL_LISTENADDRESS=0.0.0.0
+      - CONSENTER_GENERAL_GENESISMETHOD=file
+      - CONSENTER_GENERAL_GENESISFILE=/etc/spiralchain/configtx/DefaultDag_0.dhr
+      - CONSENTER_GENERAL_BROADCASTADDRESSES=3ddag-consenter-2:7050;3ddag-consenter-3:7050
+      - CONSENTER_GENERAL_CONSENTERGROUPSIZE=3
+      - CONSENTER_DGRAPH_DGRAPHCONFIG_DGRAPHADDRESS=dgraph-server-consenter-1:9080      
+      - CONSENTER_GENERAL_LOCALMSPID=SampleOrg
+      - CONSENTER_GENERAL_LOCALMSPDIR=/etc/spiralchain/msp/consenter
+      - CONSENTER_GENERAL_TLS_ENABLED=false
+      - CONSENTER_GENERAL_TLS_PRIVATEKEY=/etc/spiralchain/msp/consenter/keystore/key.pem
+      - CONSENTER_GENERAL_TLS_CERTIFICATE=/etc/spiralchain/msp/consenter/signcerts/endorser.pem
+      - CONSENTER_GENERAL_TLS_ROOTCAS=[/etc/spiralchain/msp/consenter/cacerts/ca-cert.pem]
+    working_dir: /opt/gopath/src/github.com/spiralchain/3ddag/consenter
+    command: /bin/bash -c "sleep 10; consenter"
+    ports:
+      - 7050:7050
+    volumes:
+        - ./chain:/etc/spiralchain/configtx
+        - ./chain/config/consenterconfig1/msp:/etc/spiralchain/msp/consenter
+    depends_on:
+      - dgraph-zero-consenter-1
+      - dgraph-server-consenter-1
+      - dgraph-ratel-consenter-1        
+
+  dgraph-zero-consenter-1:
+    image: spiralchain/dgraph:amd64-latest
+    container_name: dgraph-zero-consenter-1
+#    volumes:
+#      - ./data-consenter-1:/dgraph
+    ports:
+      - 5080:5080
+      - 6080:6080
+    #restart: on-failure
+    command: dgraph zero --my=dgraph-zero-consenter-1:5080
+  dgraph-server-consenter-1:
+    container_name: dgraph-server-consenter-1
+    image: spiralchain/dgraph:amd64-latest
+#    volumes:
+#      - ./data-consenter-1:/dgraph
+    ports:
+      - 8080:8080
+      - 9080:9080
+    #restart: on-failure
+    command: dgraph server --my=dgraph-server-consenter-1:7080 --lru_mb=2048 --zero=dgraph-zero-consenter-1:5080
+  dgraph-ratel-consenter-1:
+    container_name: dgraph-ratel-consenter-1
+    image: spiralchain/dgraph:amd64-latest
+#    volumes:
+#      - ./data-consenter-1:/dgraph
+    ports:
+      - 8000:8000
+    command: dgraph-ratel
+    
+    
+  3ddag-consenter-2:
+    container_name: 3ddag-consenter-2
+    image: spiralchain/3ddag-consenter:amd64-latest
+    environment:
+      - GOPATH=/opt/gopath    
+      - GRPC_TRACE=all
+      - GRPC_VERBOSITY=debug
+      - CONSENTER_GENERAL_LOGLEVEL=ERROR
+      - CONSENTER_GENERAL_LISTENADDRESS=0.0.0.0
+      - CONSENTER_GENERAL_GENESISMETHOD=file
+      - CONSENTER_GENERAL_GENESISFILE=/etc/spiralchain/configtx/DefaultDag_0.dhr
+      - CONSENTER_GENERAL_BROADCASTADDRESSES=3ddag-consenter-1:7050;3ddag-consenter-3:7050
+      - CONSENTER_GENERAL_CONSENTERGROUPSIZE=3
+      - CONSENTER_DGRAPH_DGRAPHCONFIG_DGRAPHADDRESS=dgraph-server-consenter-2:9080
+      - CONSENTER_GENERAL_LOCALMSPID=SampleOrg
+      - CONSENTER_GENERAL_LOCALMSPDIR=/etc/spiralchain/msp/consenter
+      - CONSENTER_GENERAL_TLS_ENABLED=false
+      - CONSENTER_GENERAL_TLS_PRIVATEKEY=/etc/spiralchain/msp/consenter/keystore/key.pem
+      - CONSENTER_GENERAL_TLS_CERTIFICATE=/etc/spiralchain/msp/consenter/signcerts/endorser.pem
+      - CONSENTER_GENERAL_TLS_ROOTCAS=[/etc/spiralchain/msp/consenter/cacerts/ca-cert.pem]
+    working_dir: /opt/gopath/src/github.com/spiralchain/3ddag/consenter
+    command: /bin/bash -c "sleep 15; consenter"
+    ports:
+      - 8050:7050
+    volumes:
+        - ./chain:/etc/spiralchain/configtx
+        - ./chain/config/consenterconfig2/msp:/etc/spiralchain/msp/consenter
+    depends_on:
+      - dgraph-zero-consenter-2
+      - dgraph-server-consenter-2
+      - dgraph-ratel-consenter-2        
+
+  dgraph-zero-consenter-2:
+    image: spiralchain/dgraph:amd64-latest
+    container_name: dgraph-zero-consenter-2
+#    volumes:
+#      - ./data-consenter-2:/dgraph
+    ports:
+      - 5180:5080
+      - 6180:6080
+    #restart: on-failure
+    command: dgraph zero --my=dgraph-zero-consenter-2:5080
+  dgraph-server-consenter-2:
+    container_name: dgraph-server-consenter-2
+    image: spiralchain/dgraph:amd64-latest
+#    volumes:
+#      - ./data-consenter-2:/dgraph
+    ports:
+      - 8180:8080
+      - 9180:9080
+    #restart: on-failure
+    command: dgraph server --my=dgraph-server-consenter-2:7080 --lru_mb=2048 --zero=dgraph-zero-consenter-2:5080
+  dgraph-ratel-consenter-2:
+    container_name: dgraph-ratel-consenter-2
+    image: spiralchain/dgraph:amd64-latest
+#    volumes:
+#      - ./data-consenter-2:/dgraph
+    ports:
+      - 8100:8000
+    command: dgraph-ratel    
+    
+    
+  3ddag-consenter-3:
+    container_name: 3ddag-consenter-3
+    image: spiralchain/3ddag-consenter:amd64-latest
+    environment:
+      - GOPATH=/opt/gopath    
+      - GRPC_TRACE=all
+      - GRPC_VERBOSITY=debug
+      - CONSENTER_GENERAL_LOGLEVEL=ERROR
+      - CONSENTER_GENERAL_LISTENADDRESS=0.0.0.0
+      - CONSENTER_GENERAL_GENESISMETHOD=file
+      - CONSENTER_GENERAL_GENESISFILE=/etc/spiralchain/configtx/DefaultDag_0.dhr
+      - CONSENTER_GENERAL_BROADCASTADDRESSES=3ddag-consenter-1:7050;3ddag-consenter-2:7050
+      - CONSENTER_GENERAL_CONSENTERGROUPSIZE=3
+      - CONSENTER_DGRAPH_DGRAPHCONFIG_DGRAPHADDRESS=dgraph-server-consenter-3:9080
+      - CONSENTER_GENERAL_LOCALMSPID=SampleOrg
+      - CONSENTER_GENERAL_LOCALMSPDIR=/etc/spiralchain/msp/consenter
+      - CONSENTER_GENERAL_TLS_ENABLED=false
+      - CONSENTER_GENERAL_TLS_PRIVATEKEY=/etc/spiralchain/msp/consenter/keystore/key.pem
+      - CONSENTER_GENERAL_TLS_CERTIFICATE=/etc/spiralchain/msp/consenter/signcerts/endorser.pem
+      - CONSENTER_GENERAL_TLS_ROOTCAS=[/etc/spiralchain/msp/consenter/cacerts/ca-cert.pem]
+    working_dir: /opt/gopath/src/github.com/spiralchain/3ddag/consenter
+    command: /bin/bash -c "sleep 20; consenter"
+    ports:
+      - 9050:7050
+    volumes:
+        - ./chain:/etc/spiralchain/configtx
+        - ./chain/config/consenterconfig3/msp:/etc/spiralchain/msp/consenter
+    depends_on:
+      - dgraph-zero-consenter-3
+      - dgraph-server-consenter-3
+      - dgraph-ratel-consenter-3        
+
+  dgraph-zero-consenter-3:
+    image: spiralchain/dgraph:amd64-latest
+    container_name: dgraph-zero-consenter-3
+#    volumes:
+#      - ./data-consenter-3:/dgraph
+    ports:
+      - 5280:5080
+      - 6280:6080
+    #restart: on-failure
+    command: dgraph zero --my=dgraph-zero-consenter-3:5080
+  dgraph-server-consenter-3:
+    container_name: dgraph-server-consenter-3
+    image: spiralchain/dgraph:amd64-latest
+#    volumes:
+#      - ./data-consenter-3:/dgraph
+    ports:
+      - 8280:8080
+      - 9280:9080
+    #restart: on-failure
+    command: dgraph server --my=dgraph-server-consenter-3:7080 --lru_mb=2048 --zero=dgraph-zero-consenter-3:5080
+  dgraph-ratel-consenter-3:
+    container_name: dgraph-ratel-consenter-3
+    image: spiralchain/dgraph:amd64-latest
+#    volumes:
+#      - ./data-consenter-3:/dgraph
+    ports:
+      - 8200:8000
+    command: dgraph-ratel  
+    
+    
+          
+  3ddag-dev-endorser:
+    container_name: 3ddag-dev-endorser
+    image: spiralchain/3ddag-endorser:amd64-latest
+    environment:
+      - GOPATH=/opt/gopath    
+      - CORE_LOGGING_LEVEL=ERROR
+      - CORE_NEXT=true
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_DAGPEER_ID=3ddag-dev-endorser
+      - CORE_DAGPEER_ENDORSER_ENABLED=true
+      - CORE_DAGPEER_LOCALMSPID=SampleOrg
+      - CORE_DAGPEER_MSPCONFIGPATH=/etc/spiralchain/msp/endorser/
+      #- CORE_DAGPEER_GOSSIP_ORGLEADER=true
+      - CORE_DAGPEER_ADDRESS=3ddag-dev-endorser:7051  
+      - CORE_DAGPEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_DAGPEER_GOSSIP_EXTERNALENDPOINT=3ddag-dev-endorser:7051
+      - CORE_DAGPEER_TLS_ENABLED=false
+      - CORE_DAGPEER_TLS_KEY_FILE=/etc/spiralchain/msp/endorser/keystore/key.pem
+      - CORE_DAGPEER_TLS_CERT_FILE=/etc/spiralchain/msp/endorser/signcerts/endorser.pem
+      - CORE_DAGPEER_TLS_ROOTCERT_FILE=/etc/spiralchain/msp/endorser/cacerts/ca-cert.pem
+      - CORE_DAGPEER_CONSENTERADDRESSES=3ddag-consenter-1:7050
+      - CORE_LEDGER_DAGCHAIN_DGRAPHCONFIG_DGRAPHADDRESS=dgraph-server-endorser-1:9080
+      # the following setting starts chaincode containers on the same
+      # bridge network as the endorsers
+      # https://docs.docker.com/compose/networking/
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=dockercomposefiles_default
+    working_dir: /opt/gopath/bin
+    command: /bin/bash -c "sleep 25; endorser node start  --peer-chaincodedev=true"
+    ports:
+      - 7051:7051
+      - 7052:7052
+      - 7053:7053
+    volumes:
+        - /var/run/:/host/var/run/
+        - ./chain/config/endorserconfig/msp:/etc/spiralchain/msp/endorser
+        - ./3ddag/src/sacc:/opt/gopath/src/sacc
+        - ./3ddag/src/marbles:/opt/gopath/src/marbles
+        - ./3ddag/bin:/opt/gopath/bin
+    depends_on:
+      - 3ddag-consenter-1
+      - 3ddag-consenter-2
+      - 3ddag-consenter-3            
+      - dgraph-zero-endorser-1
+      - dgraph-server-endorser-1
+      - dgraph-ratel-endorser-1
+
+  dgraph-zero-endorser-1:
+    image: spiralchain/dgraph:amd64-latest
+    container_name: dgraph-zero-endorser-1
+#    volumes:
+#      - ./data-endorser-1:/dgraph
+    ports:
+      - 5081:5080
+      - 6081:6080
+    #restart: on-failure
+    command: dgraph zero --my=dgraph-zero-endorser-1:5080
+  dgraph-server-endorser-1:
+    container_name: dgraph-server-endorser-1
+    image: spiralchain/dgraph:amd64-latest
+#   volumes:
+#     - ./data-endorser-1:/dgraph
+    ports:
+      - 8081:8080
+      - 9081:9080
+    #restart: on-failure
+    command: dgraph server --my=dgraph-server-endorser-1:7080 --lru_mb=2048 --zero=dgraph-zero-endorser-1:5080
+  dgraph-ratel-endorser-1:
+    container_name: dgraph-ratel-endorser-1
+    image: spiralchain/dgraph:amd64-latest
+#    volumes:
+#      - ./data-endorser-1:/dgraph
+    ports:
+      - 8001:8000
+    command: dgraph-ratel       
+
+  3ddag-dev-cli:
+    container_name: 3ddag-dev-cli
+    image: spiralchain/3ddag-endorser:amd64-latest
+    tty: true
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_DAGPEER_ADDRESS=3ddag-dev-endorser:7051
+      - CORE_DAGPEER_ID=3ddag-dev-cli
+      - CORE_DAGPEER_LOCALMSPID=SampleOrg
+      - CORE_DAGPEER_TLS_ENABLED=false
+      - CORE_DAGPEER_TLS_CERT_FILE=/opt/gopath/src/github.com/spiralchain/3ddag/sampleconfig/msp/signcerts/endorser.pem
+      - CORE_DAGPEER_TLS_KEY_FILE=/opt/gopath/src/github.com/spiralchain/3ddag/sampleconfig/msp/keystore/key.pem
+      - CORE_DAGPEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/spiralchain/3ddag/sampleconfig/msp/cacerts/ca-cert.pem
+      - CORE_DAGPEER_MSPCONFIGPATH=/opt/gopath/src/github.com/spiralchain/3ddag/sampleconfig/msp
+      - PRODUCTION_PATH=/var/spiralchain/production 
+  
+    working_dir: /opt/gopath/bin
+    command: /bin/bash
+    volumes:
+        - ./3ddag/src/github.com/spiralchain/3ddag/sampleconfig:/opt/gopath/src/github.com/spiralchain/3ddag/sampleconfig
+        - ./3ddag/src/sacc:/opt/gopath/src/sacc
+        - ./3ddag/src/marbles:/opt/gopath/src/marbles       
+        - ./3ddag/bin:/opt/gopath/bin 
+        - ./chain/DefaultDag_0.dhr:/opt/gopath/bin/DefaultDag_0.dhr        
+                
+    depends_on:
+      - 3ddag-dev-endorser
+    links:
+      - 3ddag-dev-endorser      
+      
+     

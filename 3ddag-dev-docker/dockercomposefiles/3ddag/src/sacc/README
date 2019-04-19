@@ -1,0 +1,2 @@
+go build -v -o sacc simple_asset.go 
+CORE_CHAINCODE_LOGGING_LEVEL=DEBUG CORE_PEER_ADDRESS=localhost:7052 CORE_CHAINCODE_ID_NAME=mycc:1.0 ./sacc
